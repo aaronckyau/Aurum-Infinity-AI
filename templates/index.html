@@ -1,0 +1,155 @@
+{# ================================================================
+   index.html - 主分析頁面
+   ================================================================
+   傳入變數（由 app.py 傳入）：
+     - ticker       (str)  : 股票代碼，例如 "NVDA"
+     - stock_name   (str)  : 英文公司名稱
+     - chinese_name (str)  : 中文公司名稱
+     - m            (dict) : 指標數據
+     - date         (str)  : 系統日期
+     - sections     (dict) : 分析模組名稱
+   
+   CSS：static/css/terminal.css
+   JS ：static/js/terminal.js
+   
+   修改指引：
+     - 修改品牌色      → static/css/base.css 的 :root 變數
+     - 修改卡片預覽高度 → static/css/terminal.css 的 .preview-box
+     - 修改 JS 邏輯    → static/js/terminal.js
+     - 新增分析模組    → 在下方 for 迴圈加入 (id, title, icon)
+                         並在 prompts.yaml 加入對應 section
+   ================================================================ #}
+
+{% extends "base.html" %}
+
+{% block title %}{{ stock_name }} 投資決策終端 | Aurum Intelligence{% endblock %}
+
+{# body 加上 data-ticker 供 JS 讀取 #}
+{% block body_class %}p-6" data-ticker="{{ ticker }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1440px] mx-auto">
+
+    <!-- ===== HEADER ===== -->
+    <header class="flex justify-between items-center mb-12 bg-white p-8 border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-8">
+            <div>
+                <h1 class="text-4xl font-serif italic text-[#b18e4d] tracking-widest leading-none">{{ chinese_name }}</h1>
+                <p class="text-[10px] text-gray-400 mt-3 tracking-[0.4em] uppercase font-bold">{{ stock_name }} // {{ ticker }}</p>
+            </div>
+            <div class="h-12 w-[1px] bg-gray-200"></div>
+            <div class="flex flex-col gap-1">
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">系統日期</div>
+                <div class="text-xs text-[#b18e4d] font-bold mono">{{ date }}</div>
+            </div>
+        </div>
+        <form action="/" method="GET" class="flex bg-[#f9f9f9] border border-gray-200 focus-within:ring-1 ring-[#b18e4d] transition-all">
+            <input type="text" name="ticker" placeholder="輸入股票代碼..."
+                   class="bg-transparent px-6 py-4 w-64 uppercase text-xs tracking-widest focus:outline-none mono">
+            <button type="submit" class="btn-gold px-10 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">輸入股票代碼</button>
+        </form>
+    </header>
+
+    <!-- ===== 基本面分析區（4 欄） ===== -->
+    <div class="mb-16">
+        <div class="flex items-center gap-4 mb-8">
+            <h4 class="text-xl font-bold tracking-tight text-gray-900">基本面決策矩陣</h4>
+            <div class="h-[1px] flex-grow bg-gray-100"></div>
+            <span class="text-[16px] text-[#b18e4d] font-bold tracking-widest italic">基本面分析</span>
+        </div>
+        <div class="grid grid-cols-4 gap-8">
+            {% for id, title, icon in [('biz', '商業模式', '策略'), ('exec', '治理效能', '管理層'), ('finance', '財務質量', '財務'), ('call', '會議展望', '展望')] %}
+            <div class="section-card p-8">
+                <div class="flex justify-between items-start mb-8">
+                    <div class="flex items-center">
+                        <span class="text-[12px] text-[#b18e4d] font-bold tracking-[0.2em] border-b border-[#b18e4d]/30 pb-1 mono">{{ icon }}</span>
+                        <span id="badge-{{ id }}"></span>
+                    </div>
+                    <div id="dot-{{ id }}" class="w-2 h-2 rotate-45 bg-gray-200 transition-colors duration-500"></div>
+                </div>
+                <h5 class="font-black text-lg mb-4 tracking-tight">{{ title }}</h5>
+                <div class="preview-box">
+                    <p id="preview-{{ id }}" class="text-gray-400 leading-relaxed italic">系統初始化中...</p>
+                </div>
+                <button id="btn-{{ id }}" onclick="openPopUp('{{ id }}', '{{ title }}')"
+                        class="hidden w-full mt-8 py-3 text-[9px] font-bold tracking-[0.2em] border border-gray-200 bg-gray-50 hover:bg-white hover:border-[#b18e4d] transition-all mono">開啟報告</button>
+                <button id="update-{{ id }}" onclick="updateSection('{{ id }}')"
+                        class="update-btn mono">🔄 重新分析</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ===== 技術面分析區（3 欄） ===== -->
+    <div class="mb-24">
+        <div class="flex items-center gap-4 mb-8">
+            <h4 class="text-xl font-bold tracking-tight text-gray-900">技術與情緒診斷</h4>
+            <div class="h-[1px] flex-grow bg-gray-100"></div>
+            <span class="text-[16px] text-[#b18e4d] font-bold tracking-widest italic">市場動態</span>
+        </div>
+        <div class="grid grid-cols-3 gap-8">
+            {% for id, title, icon in [('ta_price', '價格行為', '技術面'), ('ta_option', '期權數據', '衍生品'), ('ta_social', '社群情緒', '輿情')] %}
+            <div class="section-card p-8">
+                <div class="flex justify-between items-start mb-8">
+                    <div class="flex items-center">
+                        <span class="text-[12px] text-[#b18e4d] font-bold tracking-[0.2em] border-b border-[#b18e4d]/30 pb-1 mono">{{ icon }}</span>
+                        <span id="badge-{{ id }}"></span>
+                    </div>
+                    <div id="dot-{{ id }}" class="w-2 h-2 rotate-45 bg-gray-200"></div>
+                </div>
+                <h5 class="font-black text-lg mb-4 tracking-tight">{{ title }}</h5>
+                <div class="preview-box">
+                    <p id="preview-{{ id }}" class="text-gray-400 leading-relaxed italic">待命狀態...</p>
+                </div>
+                <button id="btn-{{ id }}" onclick="openPopUp('{{ id }}', '{{ title }}')"
+                        class="hidden w-full mt-8 py-3 text-[9px] font-bold tracking-[0.2em] border border-gray-200 bg-gray-50 hover:bg-white hover:border-[#b18e4d] transition-all mono">檢視分析</button>
+                <button id="update-{{ id }}" onclick="updateSection('{{ id }}')"
+                        class="update-btn mono">🔄 重新分析</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ===== 免責聲明 ===== -->
+    <footer class="mt-20 pt-12 border-t border-gray-200 pb-12 text-gray-500">
+        <div class="max-w-5xl">
+            <h5 class="text-xs font-bold text-gray-900 mb-6 tracking-widest italic">免責聲明與風險披露</h5>
+            <div class="grid grid-cols-1 gap-y-6 text-[11px]">
+                <div>
+                    <p class="font-bold mb-1 text-gray-700">1. 僅供參考，不構成要約</p>
+                    <p class="mb-4">本平台由人工智能（AI）生成的分析、報告或建議僅供參考之用，不應被視為買賣任何證券、期權或其他金融產品的要約、徵求、邀請或建議。</p>
+
+                    <p class="font-bold mb-1 text-gray-700">2. AI 技術的局限性</p>
+                    <p class="mb-4">本系統利用大語言模型及自動化算法進行數據處理。人工智能可能會產生錯誤的數據解讀、技術故障。系統輸出的內容受限於數據更新的滯後性，可能無法實時反映瞬息萬變的市場狀況。</p>
+
+                    <p class="font-bold mb-1 text-gray-700">3. 投資風險</p>
+                    <p class="mb-4">證券交易涉及重大風險。過去的業績不代表未來的表現。AI 生成的分析基於歷史數據模型，不能預測市場的極端波動或不可預見的政治、經濟事件。您在作出投資決定前，應充分衡量自身的財務狀況、投資經驗及風險承受能力。</p>
+
+                    <p class="font-bold mb-1 text-gray-700">4. 非專業財務意見</p>
+                    <p class="mb-4">本平台的 AI 服務並非旨在替代專業的人類財務顧問。AI 的建議是通用性的，並未考慮您的特定投資目標或個人需求。在作出任何投資決策前，我們強烈建議您諮詢香港證監會持牌的專業投資顧問。</p>
+
+                    <p class="font-bold mb-1 text-gray-700">5. 數據來源與準確性</p>
+                    <p class="mb-4">本系統使用的第三方數據雖被認為是可靠的，但我們不保證其準確性、完整性或及時性。對於因依賴本平台內容而導致的任何直接或間接損失，本平台及相關開發人員概不負責。</p>
+
+                    <p class="font-bold mb-1 text-gray-700">6. 最終決策權</p>
+                    <p>使用本平台即表示您確認：您是在獨立判斷的基礎上進行交易。所有投資決策及其後果均由您本人自行承擔。</p>
+                </div>
+            </div>
+            <div class="mt-10 pt-6 border-t border-gray-100 text-[10px] tracking-widest flex justify-between">
+                <span>© Aurum Infinity Capital Limited  // 版權所有</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- 彈出視窗容器 -->
+<div id="popup-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+{% endblock %}

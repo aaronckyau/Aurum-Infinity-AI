@@ -1,0 +1,32 @@
+/* ================================================================
+   base.css - 全站共用樣式
+   ================================================================
+   修改指引：
+     - 修改品牌色 → 改 :root 裡的 CSS 變數
+     - 修改字體   → 改 body 的 font-family
+   ================================================================ */
+
+/* 品牌色 CSS 變數（改這裡即全站更新） */
+:root {
+    --aurum-gold: #b18e4d;
+    --aurum-dark: #1a1a1a;
+    --aurum-bg:   #f8f8f8;
+}
+
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background-color: var(--aurum-bg);
+    color: #333;
+    font-size: 14px;
+}
+
+/* 等寬字體（股票代碼、標籤） */
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* 金色漸層按鈕 */
+.btn-gold {
+    background: linear-gradient(135deg, #c5a66d 0%, #b18e4d 100%);
+    color: white;
+    transition: all 0.3s ease;
+}
+.btn-gold:hover { opacity: 0.9; transform: translateY(-1px); }

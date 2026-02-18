@@ -1,0 +1,38 @@
+{# ================================================================
+   base.html - 共用基礎模板
+   ================================================================
+   用途：所有頁面的共同外殼
+   
+   可覆寫區塊（Block）：
+     {% block title %}       → 頁面標題
+     {% block extra_css %}   → 該頁面獨有的 CSS 檔案
+     {% block body_class %}  → body 的 class
+     {% block content %}     → 頁面主體內容
+     {% block extra_js %}    → 該頁面獨有的 JS 檔案
+   ================================================================ #}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aurum Intelligence{% endblock %}</title>
+
+    <!-- Tailwind CSS（開發用，生產環境建議改用編譯版） -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+    <!-- 全站共用 CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

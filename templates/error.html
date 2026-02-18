@@ -1,0 +1,49 @@
+{# ================================================================
+   error.html - 無效股票代碼錯誤頁面
+   ================================================================
+   傳入變數（由 app.py 傳入）：
+     - ticker (str) : 用戶輸入的無效代碼，例如 "GGWEE"
+     - date   (str) : 系統日期
+   
+   觸發條件：
+     app.py → index() → get_stock_name() 回傳 None
+   ================================================================ #}
+
+{% extends "base.html" %}
+
+{% block title %}錯誤 | Aurum Intelligence{% endblock %}
+{% block body_class %}min-h-screen flex items-center justify-center p-6{% endblock %}
+
+{% block content %}
+<div class="max-w-lg w-full bg-white border border-gray-100 shadow-sm p-12 text-center">
+
+    <!-- 警告圖標 -->
+    <div class="w-16 h-16 mx-auto mb-8 rotate-45 border-4 border-red-400 flex items-center justify-center">
+        <span class="text-red-400 text-2xl font-bold -rotate-45">!</span>
+    </div>
+
+    <h1 class="text-2xl font-black text-gray-900 mb-4">無效的股票代碼</h1>
+
+    <p class="text-gray-500 mb-2 text-sm">
+        系統無法識別股票代碼
+        <span class="mono font-bold text-red-500 text-base">{{ ticker }}</span>
+    </p>
+    <p class="text-gray-400 text-xs mb-10">
+        請確認代碼是否正確，例如：AAPL、TSLA、NVDA、0700.HK
+    </p>
+
+    <!-- 重新查詢 -->
+    <form action="/" method="GET"
+          class="flex bg-[#f9f9f9] border border-gray-200 focus-within:ring-1 ring-[#b18e4d] transition-all mb-6">
+        <input type="text" name="ticker" placeholder="重新輸入股票代碼..."
+               class="bg-transparent px-6 py-4 flex-1 uppercase text-xs tracking-widest focus:outline-none mono">
+        <button type="submit" class="btn-gold px-10 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">查詢</button>
+    </form>
+
+    <a href="/" class="text-[11px] text-[#b18e4d] hover:underline tracking-widest">← 返回預設標的</a>
+
+    <div class="mt-12 pt-6 border-t border-gray-100">
+        <p class="text-[10px] text-gray-300 tracking-widest">AURUM INTELLIGENCE TERMINAL // {{ date }}</p>
+    </div>
+</div>
+{% endblock %}
