@@ -2,5 +2,5 @@ flask
 markdown
 requests
 google-genai
-pyyaml
 python-dotenv
+gunicorn
