@@ -49,6 +49,11 @@ class Config:
     API_MAX_RETRIES = 2
     API_RETRY_DELAY = 5
 
+    # -----------------------------------------------------------------------
+    # 美股交易所列表（這些交易所不需要呼叫 AI 取中文名）
+    # -----------------------------------------------------------------------
+    US_EXCHANGES = {'NYSE', 'NASDAQ', 'AMEX', 'NYSEArca', 'BATS', 'OTC'}
+
 
 app = Flask(__name__)
 today = datetime.now().strftime('%Y/%m/%d')
@@ -58,7 +63,7 @@ today = datetime.now().strftime('%Y/%m/%d')
 # ============================================================================
 gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
 prompt_manager = PromptManager(Config.PROMPTS_PATH)
-db = StockDatabase()  # ★ 新增：初始化資料庫
+db = StockDatabase()
 
 # ============================================================================
 # Gemini API Functions
@@ -105,7 +110,15 @@ def call_gemini_api(prompt: str, use_search: bool = True) -> str:
 # ============================================================================
 
 def get_stock_name(ticker: str) -> tuple:
-    """獲取公司完整名稱與交易所（精確匹配 ticker）"""
+    """
+    獲取公司完整名稱與交易所
+    
+    匹配邏輯（按優先級）：
+      1. 精確匹配：輸入 AAPL → 匹配 AAPL
+      2. 帶後綴匹配：輸入 0700.HK → 匹配 0700.HK
+      3. 模糊匹配：輸入 601899 → 匹配 601899.SS（A 股）
+         - 適用場景：用戶輸入純數字代碼但不帶 .SS / .SZ 後綴
+    """
     url = f"https://financialmodelingprep.com/stable/search-symbol?query={ticker}&apikey={Config.FMP_API_KEY}"
     try:
         response = requests.get(url, timeout=Config.REQUEST_TIMEOUT)
@@ -115,16 +128,41 @@ def get_stock_name(ticker: str) -> tuple:
             print(f"[get_stock_name] No data for {ticker}")
             return None, None
         
+        ticker_upper = ticker.upper().strip()
+        
+        # === 第 1 輪：精確匹配（AAPL → AAPL, 0700.HK → 0700.HK）===
         for item in data:
             symbol = item.get('symbol', '').upper().strip()
-            if symbol == ticker.upper().strip():
+            if symbol == ticker_upper:
                 name = item.get('name', '').strip()
                 exchange = item.get('exchange', '').strip()
                 if name:
-                    print(f"[get_stock_name] Match: {ticker} -> {name} ({exchange})")
+                    print(f"[get_stock_name] 精確匹配: {ticker} -> {symbol} = {name} ({exchange})")
                     return name, exchange
         
-        print(f"[get_stock_name] No exact match for {ticker}")
+        # === 第 2 輪：前綴匹配（601899 → 601899.SS, 000001 → 000001.SZ）===
+        # 只在用戶輸入不含 "." 時啟用（避免 0700.HK 誤匹配到其他東西）
+        if '.' not in ticker_upper:
+            best_match = None
+            for item in data:
+                symbol = item.get('symbol', '').upper().strip()
+                # symbol 以用戶輸入開頭，且後面是 ".XX" 格式
+                if symbol.startswith(ticker_upper + '.'):
+                    name = item.get('name', '').strip()
+                    exchange = item.get('exchange', '').strip()
+                    if name:
+                        # 如果有多個匹配（如 601899.SS 和 601899.SZ），優先選主板
+                        if best_match is None:
+                            best_match = (name, exchange, symbol)
+                        # 優先級：SHH（上海）> SHZ（深圳）> 其他
+                        elif exchange in ('SHH', 'SHZ') and best_match[1] not in ('SHH', 'SHZ'):
+                            best_match = (name, exchange, symbol)
+            
+            if best_match:
+                print(f"[get_stock_name] 前綴匹配: {ticker} -> {best_match[2]} = {best_match[0]} ({best_match[1]})")
+                return best_match[0], best_match[1]
+        
+        print(f"[get_stock_name] No match for {ticker}")
         return None, None
         
     except Exception as e:
@@ -132,11 +170,27 @@ def get_stock_name(ticker: str) -> tuple:
         return None, None
 
 
+def is_us_stock(exchange: str) -> bool:
+    """判斷是否為美股（根據交易所代碼）"""
+    return exchange.upper().strip() in Config.US_EXCHANGES
+
+
 def get_chinese_name(english_name: str, ticker: str, exchange: str) -> str:
-    """透過 Gemini 取得公司繁體中文名稱"""
+    """
+    取得公司的繁體中文名稱
+    
+    邏輯：
+      - 美股（NYSE / NASDAQ 等）→ 直接回傳英文名，不呼叫 AI（節省成本）
+      - 港股 / A 股 / 其他      → 呼叫 Gemini API 取得官方中文名稱
+    """
+    if is_us_stock(exchange):
+        print(f"[get_chinese_name] 美股 {ticker}（{exchange}），跳過 AI，使用英文名")
+        return english_name
+    
+    print(f"[get_chinese_name] 非美股 {ticker}（{exchange}），呼叫 AI 取中文名")
     prompt = (
         f"公司：{english_name} ({ticker})，交易所：{exchange}。\n"
-        f"請只回覆這家公司的官方繁體中文名稱，不要任何解釋。"
+        f"請只回覆這家公司的官方繁體中文名稱，不要任何解釋。不要包含股票代碼或交易所名稱, 不要有限公司等字樣，直接回覆核心名稱即可。"
     )
     return call_gemini_api(prompt, use_search=False).strip()
 
@@ -152,10 +206,8 @@ def index():
     cached_data = db.get_stock(ticker)
     
     if cached_data:
-        # 從資料庫載入
         print(f"[DB] 從資料庫載入 {ticker}")
         
-        # 將 Markdown 轉為 HTML
         cached_sections_html = {}
         for section_key in ['biz', 'finance', 'valuation', 'tech', 'sentiment', 'risk', 'strategy']:
             if cached_data.get(section_key):
@@ -172,7 +224,7 @@ def index():
             m={"eps": "-", "pe": "-", "yield": "-", "short": "-", "cap": "-", "vol": "-"},
             date=today,
             sections=prompt_manager.get_section_names(),
-            cached_sections=cached_sections_html  # ★ 傳遞快取資料（已轉 HTML）
+            cached_sections=cached_sections_html
         )
     
     # 沒有快取，查詢 API
@@ -183,7 +235,7 @@ def index():
 
     chinese_name = get_chinese_name(stock_name, ticker, exchange)
     
-    # ★ 儲存基本資料到資料庫（但分析內容還是空的）
+    # ★ 儲存基本資料到資料庫
     db.save_stock(
         ticker=ticker,
         stock_name=stock_name,
@@ -205,14 +257,14 @@ def index():
         m=metrics,
         date=today,
         sections=prompt_manager.get_section_names(),
-        cached_sections=None  # 沒有快取
+        cached_sections=None
     )
 
 
 @app.route('/analyze/<section>', methods=['POST'])
 def analyze_section(section):
     ticker = request.json.get('ticker')
-    force_update = request.json.get('force_update', False)  # ★ 是否強制更新
+    force_update = request.json.get('force_update', False)
     
     # ★ 如果不是強制更新，先檢查資料庫
     if not force_update:
@@ -226,7 +278,7 @@ def analyze_section(section):
             return jsonify({
                 "success": True,
                 "report": html_content,
-                "from_cache": True  # ★ 標記來自快取
+                "from_cache": True
             })
     
     # ★ 需要呼叫 AI（首次查詢或強制更新）
@@ -261,7 +313,7 @@ def analyze_section(section):
         return jsonify({
             "success": True,
             "report": html_content,
-            "from_cache": False  # ★ 標記來自 AI
+            "from_cache": False
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
