@@ -9,6 +9,7 @@ API：Google Gemini API + Google Search Grounding（自帶網絡搜索）
 """
 from dotenv import load_dotenv
 import os
+import re
 import time
 from datetime import datetime
 from typing import Dict
@@ -106,6 +107,47 @@ def call_gemini_api(prompt: str, use_search: bool = True) -> str:
     return "⚠️ API 請求失敗。"
 
 # ============================================================================
+# Ticker 標準化
+# ============================================================================
+
+def normalize_ticker(ticker: str) -> str:
+    """
+    標準化股票代碼
+    
+    規則：
+      - 1~4 位純數字 → 港股：補零到 4 位 + .HK
+        例：700 → 0700.HK, 9 → 0009.HK, 388 → 0388.HK, 1810 → 1810.HK
+      - 5 位以上純數字 → A 股：原樣保留（交給 get_stock_name 前綴匹配）
+        例：601899 → 601899, 000001 → 000001
+      - 已有 .HK / .SS / .SZ 後綴 → 原樣保留
+        例：0700.HK → 0700.HK, 601899.SS → 601899.SS
+      - 英文字母開頭 → 美股：原樣保留
+        例：AAPL → AAPL, TSLA → TSLA
+    """
+    raw = ticker.upper().strip()
+    
+    # 已有後綴（.HK / .SS / .SZ / .T 等）→ 不處理
+    if '.' in raw:
+        print(f"[normalize] 已有後綴: {raw}")
+        return raw
+    
+    # 純數字 → 判斷位數
+    if raw.isdigit():
+        if len(raw) <= 4:
+            # 1~4 位數字 → 港股，補零到 4 位 + .HK
+            normalized = raw.zfill(4) + '.HK'
+            print(f"[normalize] 港股補零: {ticker} → {normalized}")
+            return normalized
+        else:
+            # 5 位以上 → A 股（不加後綴，交給 get_stock_name 前綴匹配）
+            print(f"[normalize] A 股: {raw}")
+            return raw
+    
+    # 英文或其他 → 美股，原樣保留
+    print(f"[normalize] 美股/其他: {raw}")
+    return raw
+
+# ============================================================================
 # Data Functions
 # ============================================================================
 
@@ -137,7 +179,7 @@ def get_stock_name(ticker: str) -> tuple:
                 name = item.get('name', '').strip()
                 exchange = item.get('exchange', '').strip()
                 if name:
-                    print(f"[get_stock_name] 精確匹配: {ticker} -> {symbol} = {name} ({exchange})")
+                    print(f"[get_stock_name] 精確匹配: {ticker} → {symbol} = {name} ({exchange})")
                     return name, exchange
         
         # === 第 2 輪：前綴匹配（601899 → 601899.SS, 000001 → 000001.SZ）===
@@ -146,20 +188,17 @@ def get_stock_name(ticker: str) -> tuple:
             best_match = None
             for item in data:
                 symbol = item.get('symbol', '').upper().strip()
-                # symbol 以用戶輸入開頭，且後面是 ".XX" 格式
                 if symbol.startswith(ticker_upper + '.'):
                     name = item.get('name', '').strip()
                     exchange = item.get('exchange', '').strip()
                     if name:
-                        # 如果有多個匹配（如 601899.SS 和 601899.SZ），優先選主板
                         if best_match is None:
                             best_match = (name, exchange, symbol)
-                        # 優先級：SHH（上海）> SHZ（深圳）> 其他
                         elif exchange in ('SHH', 'SHZ') and best_match[1] not in ('SHH', 'SHZ'):
                             best_match = (name, exchange, symbol)
             
             if best_match:
-                print(f"[get_stock_name] 前綴匹配: {ticker} -> {best_match[2]} = {best_match[0]} ({best_match[1]})")
+                print(f"[get_stock_name] 前綴匹配: {ticker} → {best_match[2]} = {best_match[0]} ({best_match[1]})")
                 return best_match[0], best_match[1]
         
         print(f"[get_stock_name] No match for {ticker}")
@@ -200,7 +239,8 @@ def get_chinese_name(english_name: str, ticker: str, exchange: str) -> str:
 
 @app.route('/')
 def index():
-    ticker = request.args.get('ticker', Config.DEFAULT_TICKER).upper().strip()
+    raw_ticker = request.args.get('ticker', Config.DEFAULT_TICKER).strip()
+    ticker = normalize_ticker(raw_ticker)  # ★ 標準化：700 → 0700.HK
     
     # ★ 先檢查資料庫是否有快取
     cached_data = db.get_stock(ticker)
@@ -231,7 +271,7 @@ def index():
     stock_name, exchange = get_stock_name(ticker)
     
     if stock_name is None:
-        return render_template('error.html', ticker=ticker, date=today), 404
+        return render_template('error.html', ticker=raw_ticker, date=today), 404
 
     chinese_name = get_chinese_name(stock_name, ticker, exchange)
     
@@ -263,7 +303,8 @@ def index():
 
 @app.route('/analyze/<section>', methods=['POST'])
 def analyze_section(section):
-    ticker = request.json.get('ticker')
+    raw_ticker = request.json.get('ticker', '')
+    ticker = normalize_ticker(raw_ticker)  # ★ 標準化
     force_update = request.json.get('force_update', False)
     
     # ★ 如果不是強制更新，先檢查資料庫
