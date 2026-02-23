@@ -249,7 +249,7 @@ def index():
         print(f"[DB] 從資料庫載入 {ticker}")
         
         cached_sections_html = {}
-        for section_key in ['biz', 'finance', 'valuation', 'tech', 'sentiment', 'risk', 'strategy']:
+        for section_key in ['biz', 'exec', 'finance', 'call', 'ta_price', 'ta_analyst', 'ta_social']:
             if cached_data.get(section_key):
                 cached_sections_html[section_key] = markdown.markdown(
                     cached_data[section_key],

@@ -31,7 +31,7 @@ const TICKER = document.body.dataset.ticker || '';
    頁面載入：自動觸發全部 7 個分析模組
    ========================================================== */
 window.onload = function () {
-    const sections = ['biz', 'finance', 'exec', 'call', 'ta_price', 'ta_option', 'ta_social'];
+    const sections = ['biz', 'finance', 'exec', 'call', 'ta_price', 'ta_analyst', 'ta_social'];
     sections.forEach(id => fetchSection(id));
 };
 
@@ -91,7 +91,7 @@ async function fetchSection(sectionId, forceUpdate = false) {
             // 快取標記
             if (badge) {
                 if (data.from_cache && !forceUpdate) {
-                    badge.innerHTML = '<span class="cache-badge cached">CACHE</span>';
+                    badge.innerHTML = '<span class="cache-badge cached">非即時數據</span>';
                 } else {
                     badge.innerHTML = '<span class="cache-badge fresh">FRESH</span>';
                     setTimeout(() => { badge.innerHTML = ''; }, 3000);

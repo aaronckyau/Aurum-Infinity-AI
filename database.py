@@ -22,13 +22,13 @@ class StockDatabase:
         """
         self.db_path = db_path
         self._create_table()
+        self._migrate()  # ★ 啟動時自動檢查並執行遷移
 
     def _create_table(self):
         """建立資料表（如果不存在）"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # ★ 修正：使用與 HTML 一致的欄位名稱
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS stock_analysis (
                 ticker TEXT PRIMARY KEY,
@@ -40,7 +40,7 @@ class StockDatabase:
                 finance TEXT,
                 call TEXT,
                 ta_price TEXT,
-                ta_option TEXT,
+                ta_analyst TEXT,
                 ta_social TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
@@ -48,6 +48,37 @@ class StockDatabase:
         ''')
         
         conn.commit()
+        conn.close()
+
+    def _migrate(self):
+        """
+        資料庫遷移 — 自動處理欄位重命名
+        
+        每次啟動時檢查，已遷移過的不會重複執行。
+        如果未來有新的遷移需求，在這裡繼續加即可。
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # 取得目前所有欄位名稱
+        cursor.execute('PRAGMA table_info(stock_analysis)')
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        # ---------------------------------------------------------------
+        # 遷移 1：ta_option → ta_analyst（2026/02）
+        # ---------------------------------------------------------------
+        if 'ta_option' in columns and 'ta_analyst' not in columns:
+            print("[DB Migration] 正在重命名欄位: ta_option → ta_analyst")
+            cursor.execute('ALTER TABLE stock_analysis RENAME COLUMN ta_option TO ta_analyst')
+            conn.commit()
+            print("[DB Migration] ✅ 遷移完成，舊資料已保留")
+        
+        # ---------------------------------------------------------------
+        # 未來的遷移可以繼續加在這裡，例如：
+        # if 'old_column' in columns and 'new_column' not in columns:
+        #     cursor.execute('ALTER TABLE ... RENAME COLUMN ...')
+        # ---------------------------------------------------------------
+        
         conn.close()
 
     def get_stock(self, ticker: str) -> Optional[Dict]:
@@ -135,11 +166,10 @@ class StockDatabase:
             '''
             cursor.execute(sql, values)
         else:
-            # ★ 修正：使用正確的欄位名稱
             cursor.execute('''
                 INSERT INTO stock_analysis (
                     ticker, stock_name, chinese_name, exchange,
-                    biz, exec, finance, call, ta_price, ta_option, ta_social,
+                    biz, exec, finance, call, ta_price, ta_analyst, ta_social,
                     created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
@@ -152,7 +182,7 @@ class StockDatabase:
                 sections.get('finance', ''),
                 sections.get('call', ''),
                 sections.get('ta_price', ''),
-                sections.get('ta_option', ''),
+                sections.get('ta_analyst', ''),
                 sections.get('ta_social', ''),
                 now,
                 now
