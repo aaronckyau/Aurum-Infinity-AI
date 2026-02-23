@@ -93,8 +93,7 @@ async function fetchSection(sectionId, forceUpdate = false) {
                 if (data.from_cache && !forceUpdate) {
                     badge.innerHTML = '<span class="cache-badge cached">非即時數據</span>';
                 } else {
-                    badge.innerHTML = '<span class="cache-badge fresh">FRESH</span>';
-                    setTimeout(() => { badge.innerHTML = ''; }, 3000);
+                    badge.innerHTML = '<span class="cache-badge fresh">AI 即時分析</span>';
                 }
             }
         } else {

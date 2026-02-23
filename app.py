@@ -22,7 +22,7 @@ from google import genai
 from google.genai import types
 
 from prompt_manager import PromptManager
-from database import StockDatabase
+from database import StockDatabase, VALID_SECTIONS
 
 # ============================================================================
 # Configuration
@@ -57,7 +57,9 @@ class Config:
 
 
 app = Flask(__name__)
-today = datetime.now().strftime('%Y/%m/%d')
+
+def get_today() -> str:
+    return datetime.now().strftime('%Y/%m/%d')
 
 # ============================================================================
 # 初始化 Gemini Client、PromptManager 與 Database
@@ -262,16 +264,16 @@ def index():
             stock_name=cached_data['stock_name'],
             chinese_name=cached_data['chinese_name'],
             m={"eps": "-", "pe": "-", "yield": "-", "short": "-", "cap": "-", "vol": "-"},
-            date=today,
+            date=get_today(),
             sections=prompt_manager.get_section_names(),
             cached_sections=cached_sections_html
         )
-    
+
     # 沒有快取，查詢 API
     stock_name, exchange = get_stock_name(ticker)
-    
+
     if stock_name is None:
-        return render_template('error.html', ticker=raw_ticker, date=today), 404
+        return render_template('error.html', ticker=raw_ticker, date=get_today()), 404
 
     chinese_name = get_chinese_name(stock_name, ticker, exchange)
     
@@ -295,7 +297,7 @@ def index():
         stock_name=stock_name,
         chinese_name=chinese_name,
         m=metrics,
-        date=today,
+        date=get_today(),
         sections=prompt_manager.get_section_names(),
         cached_sections=None
     )
@@ -303,6 +305,9 @@ def index():
 
 @app.route('/analyze/<section>', methods=['POST'])
 def analyze_section(section):
+    if section not in VALID_SECTIONS:
+        return jsonify({"success": False, "error": "非法的分析類別"}), 400
+
     raw_ticker = request.json.get('ticker', '')
     ticker = normalize_ticker(raw_ticker)  # ★ 標準化
     force_update = request.json.get('force_update', False)
@@ -336,7 +341,7 @@ def analyze_section(section):
             ticker=ticker,
             stock_name=stock_name,
             exchange=exchange,
-            today=today,
+            today=get_today(),
             chinese_name=chinese_name,
         )
 

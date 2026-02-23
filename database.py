@@ -9,6 +9,9 @@ import sqlite3
 from datetime import datetime
 from typing import Dict, Optional
 
+# 合法的 section 欄位白名單，防止 SQL Injection
+VALID_SECTIONS = {'biz', 'exec', 'finance', 'call', 'ta_price', 'ta_analyst', 'ta_social'}
+
 
 class StockDatabase:
     """股票分析資料庫管理類別"""
@@ -22,7 +25,6 @@ class StockDatabase:
         """
         self.db_path = db_path
         self._create_table()
-        self._migrate()  # ★ 啟動時自動檢查並執行遷移
 
     def _create_table(self):
         """建立資料表（如果不存在）"""
@@ -48,37 +50,6 @@ class StockDatabase:
         ''')
         
         conn.commit()
-        conn.close()
-
-    def _migrate(self):
-        """
-        資料庫遷移 — 自動處理欄位重命名
-        
-        每次啟動時檢查，已遷移過的不會重複執行。
-        如果未來有新的遷移需求，在這裡繼續加即可。
-        """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # 取得目前所有欄位名稱
-        cursor.execute('PRAGMA table_info(stock_analysis)')
-        columns = [row[1] for row in cursor.fetchall()]
-        
-        # ---------------------------------------------------------------
-        # 遷移 1：ta_option → ta_analyst（2026/02）
-        # ---------------------------------------------------------------
-        if 'ta_option' in columns and 'ta_analyst' not in columns:
-            print("[DB Migration] 正在重命名欄位: ta_option → ta_analyst")
-            cursor.execute('ALTER TABLE stock_analysis RENAME COLUMN ta_option TO ta_analyst')
-            conn.commit()
-            print("[DB Migration] ✅ 遷移完成，舊資料已保留")
-        
-        # ---------------------------------------------------------------
-        # 未來的遷移可以繼續加在這裡，例如：
-        # if 'old_column' in columns and 'new_column' not in columns:
-        #     cursor.execute('ALTER TABLE ... RENAME COLUMN ...')
-        # ---------------------------------------------------------------
-        
         conn.close()
 
     def get_stock(self, ticker: str) -> Optional[Dict]:
@@ -150,7 +121,7 @@ class StockDatabase:
             values.append(exchange)
             
             for section_key, content in sections.items():
-                if content:
+                if content and section_key in VALID_SECTIONS:
                     update_fields.append(f'{section_key} = ?')
                     values.append(content)
             
@@ -194,12 +165,15 @@ class StockDatabase:
     def update_section(self, ticker: str, section: str, content: str):
         """
         更新特定分析區塊的內容
-        
+
         Args:
             ticker: 股票代碼
             section: 分析區塊名稱
             content: 新的分析內容
         """
+        if section not in VALID_SECTIONS:
+            raise ValueError(f"非法的 section 欄位: {section}")
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         

@@ -1,68 +1,80 @@
-# 🏛️ Aurum Intelligence — AI 股票分析終端
+# 🏛️ Aurum Infinity — AI 股票分析终端
 
-> 基於 Google Gemini API 的多維度股票分析平台，支援美股、港股、A 股
+> 基于 Google Gemini API 的多维度股票分析平台，支持美股、港股、A 股
 
-## ✨ 功能
+---
 
-| 模組 | 分析內容 |
-|------|---------|
-| 📊 商業模式 | 價值主張、業務拆解、競爭格局、護城河評分 |
-| 💰 財務質量 | GAAP vs Non-GAAP、非經常性項目、紅旗偵測 |
-| 👔 管理層評估 | 高管背景、內部交易、誠信記錄 |
-| 🎙️ 法說會解構 | Guidance、管理層語氣、隱藏風險信號 |
-| 📈 價格技術 | 趨勢判斷、支撐壓力、技術指標 |
-| 🎯 期權籌碼 | Put/Call Ratio、Max Pain、Gamma 敞口 |
-| 💬 社群情緒 | 散戶情緒、媒體基調、產品口碑 |
+## ✨ 功能模块
 
-## 🚀 快速開始
+| 模块 | 分析内容 |
+|------|----------|
+| 📊 商业模式 | 价值主张、业务拆解、竞争格局、护城河评分 |
+| 👔 治理效能 | 高管背景、内部交易、诚信记录 |
+| 💰 财务质量 | GAAP vs Non-GAAP、非经常性项目、红旗侦测 |
+| 🎙️ 会议展望 | Guidance、管理层语气、隐藏风险信号 |
+| 📈 价格行为 | 趋势判断、支撑压力、技术指标 |
+| 🎯 市场预测 | 分析师评级、目标价、机构整体看法 |
+| 💬 社区情绪 | 散户情绪、媒体基调、网上讨论热度 |
+
+---
+
+## 🚀 快速开始
 
 ```bash
-# 1. 複製專案
-git clone https://github.com/你的帳號/stock-analysis.git
-cd stock-analysis
+# 1. 克隆项目
+git clone https://github.com/aaronckyau/Aurum-Infinity-AI.git
+cd Aurum-Infinity-AI
 
-# 2. 安裝依賴
+# 2. 安装依赖
 pip install -r requirements.txt
 
-# 3. 設定 API Key
+# 3. 配置 API Key
 cp .env.example .env
-# 編輯 .env，填入你的 API Key
+# 编辑 .env，填入你的 API Key
 
-# 4. 啟動
+# 4. 启动服务
 python app.py
 
-# 5. 打開瀏覽器
+# 5. 打开浏览器
 # http://127.0.0.1:5000
 ```
 
-## 📁 專案結構
+---
+
+## 📁 项目结构
 
 ```
-Stock_analysis/
-├── app.py                  # Flask 後端主程式
-├── prompt_manager.py       # Prompt 模板管理器
+Aurum-Infinity-AI/
+├── app.py               # Flask 后端主程序
+├── prompt_manager.py    # Prompt 模板管理器
 ├── prompts/
-│   └── prompts.yaml        # 所有 AI Prompt 模板
+│   └── prompts.yaml     # 所有 AI Prompt 模板
 ├── templates/
-│   ├── base.html           # 共用模板（品牌色、字體）
-│   ├── index.html          # 主分析頁面
-│   └── error.html          # 錯誤頁面
-├── .env.example            # 環境變數範例
-├── .gitignore              # Git 忽略清單
-└── requirements.txt        # Python 依賴
+│   ├── base.html        # 共用模板（品牌色、字体）
+│   ├── index.html       # 主分析页面
+│   └── error.html       # 错误页面
+├── .env.example         # 环境变量范例
+├── .gitignore           # Git 忽略清单
+└── requirements.txt     # Python 依赖列表
 ```
 
-## ⚙️ 環境變數
+---
 
-| 變數 | 說明 | 取得方式 |
-|------|------|---------|
-| `GEMINI_API_KEY` | Google Gemini API Key | [Google AI Studio](https://aistudio.google.com/apikey) |
-| `FMP_API_KEY` | Financial Modeling Prep API Key | [FMP Developer](https://financialmodelingprep.com/developer) |
+## ⚙️ 环境变量
 
-## ⚠️ 免責聲明
+| 变量名 | 说明 | 获取方式 |
+|--------|------|----------|
+| `GEMINI_API_KEY` | Google Gemini API 密钥 | [Google AI Studio](https://aistudio.google.com/) |
+| `FMP_API_KEY` | Financial Modeling Prep API 密钥 | [FMP Developer](https://financialmodelingprep.com/developer) |
 
-本平台由 AI 生成的分析僅供參考，不構成投資建議。詳見頁面底部完整免責聲明。
+---
+
+## ⚠️ 免责声明
+
+本平台由 AI 生成的分析内容仅供参考，不构成任何投资建议。详见页面底部完整免责声明。
+
+---
 
 ## 📄 License
 
-Private — 僅限內部使用
+Private — 仅限内部使用
