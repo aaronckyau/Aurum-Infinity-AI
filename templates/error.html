@@ -33,14 +33,14 @@
     </p>
 
     <!-- 重新查詢 -->
-    <form action="/" method="GET"
+    <form onsubmit="event.preventDefault(); var t = this.querySelector('input').value.trim(); if(t) window.location.href = '/' + t.toUpperCase();"
           class="flex bg-[#f9f9f9] border border-gray-200 focus-within:ring-1 ring-[#b18e4d] transition-all mb-6">
-        <input type="text" name="ticker" placeholder="重新輸入股票代碼..."
+        <input type="text" placeholder="重新輸入股票代碼..."
                class="bg-transparent px-6 py-4 flex-1 uppercase text-xs tracking-widest focus:outline-none mono">
         <button type="submit" class="btn-gold px-10 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">查詢</button>
     </form>
 
-    <a href="/" class="text-[11px] text-[#b18e4d] hover:underline tracking-widest">← 返回預設標的</a>
+    <a href="/NVDA" class="text-[11px] text-[#b18e4d] hover:underline tracking-widest">← 返回預設標的</a>
 
     <div class="mt-12 pt-6 border-t border-gray-100">
         <p class="text-[10px] text-gray-300 tracking-widest">AURUM INTELLIGENCE TERMINAL // {{ date }}</p>
