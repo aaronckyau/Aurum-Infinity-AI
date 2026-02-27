@@ -15,7 +15,7 @@
 {% block body_class %}min-h-screen flex items-center justify-center p-6{% endblock %}
 
 {% block content %}
-<div class="max-w-lg w-full bg-white border border-gray-100 shadow-sm p-12 text-center">
+<div class="max-w-lg w-full bg-white border border-gray-100 shadow-sm p-6 sm:p-12 text-center">
 
     <!-- 警告圖標 -->
     <div class="w-16 h-16 mx-auto mb-8 rotate-45 border-4 border-red-400 flex items-center justify-center">
@@ -24,11 +24,11 @@
 
     <h1 class="text-2xl font-black text-gray-900 mb-4">無效的股票代碼</h1>
 
-    <p class="text-gray-500 mb-2 text-sm">
+    <p class="text-gray-500 mb-2 text-sm sm:text-base">
         系統無法識別股票代碼
-        <span class="mono font-bold text-red-500 text-base">{{ ticker }}</span>
+        <span class="mono font-bold text-red-500 text-base sm:text-lg">{{ ticker }}</span>
     </p>
-    <p class="text-gray-400 text-xs mb-10">
+    <p class="text-gray-400 text-xs sm:text-sm mb-10">
         請確認代碼是否正確，例如：AAPL、TSLA、NVDA、0700.HK
     </p>
 
@@ -36,14 +36,14 @@
     <form onsubmit="event.preventDefault(); var t = this.querySelector('input').value.trim(); if(t) window.location.href = '/' + t.toUpperCase();"
           class="flex bg-[#f9f9f9] border border-gray-200 focus-within:ring-1 ring-[#b18e4d] transition-all mb-6">
         <input type="text" placeholder="重新輸入股票代碼..."
-               class="bg-transparent px-6 py-4 flex-1 uppercase text-xs tracking-widest focus:outline-none mono">
-        <button type="submit" class="btn-gold px-10 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">查詢</button>
+               class="bg-transparent px-4 sm:px-6 py-3 sm:py-4 flex-1 uppercase text-xs tracking-widest focus:outline-none mono min-w-0">
+        <button type="submit" class="btn-gold px-6 sm:px-10 py-3 sm:py-4 text-xs font-bold uppercase tracking-[0.15em] shrink-0">查詢</button>
     </form>
 
-    <a href="/NVDA" class="text-[11px] text-[#b18e4d] hover:underline tracking-widest">← 返回預設標的</a>
+    <a href="/NVDA" class="text-xs sm:text-sm text-[#b18e4d] hover:underline tracking-widest">← 返回預設標的</a>
 
     <div class="mt-12 pt-6 border-t border-gray-100">
-        <p class="text-[10px] text-gray-300 tracking-widest">AURUM INTELLIGENCE TERMINAL // {{ date }}</p>
+        <p class="text-xs text-gray-300 tracking-widest">AURUM INTELLIGENCE TERMINAL // {{ date }}</p>
     </div>
 </div>
 {% endblock %}

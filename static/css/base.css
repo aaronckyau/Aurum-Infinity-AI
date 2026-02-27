@@ -17,7 +17,7 @@ body {
     font-family: 'Noto Sans TC', sans-serif;
     background-color: var(--aurum-bg);
     color: #333;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 /* 等寬字體（股票代碼、標籤） */

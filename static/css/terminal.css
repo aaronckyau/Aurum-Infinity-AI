@@ -35,8 +35,8 @@
     overflow: hidden;
 }
 .preview-box p {
-    font-size: 11px !important;
-    line-height: 1.6 !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
 }
 
 
@@ -44,20 +44,9 @@
    2. 更新按鈕與快取標記
    ========================================================== */
 
-/* 「重新分析」按鈕（預設隱藏，JS 完成後顯示） */
+/* 「重新分析」按鈕（永久隱藏） */
 .update-btn {
-    width: 100%;
-    margin-top: 8px;
-    padding: 10px;
-    font-size: 9px;
-    font-weight: bold;
-    letter-spacing: 0.2em;
-    border: 1px solid #e5e5e5;
-    background: #fafafa;
-    color: #666;
-    transition: all 0.3s;
-    font-family: 'JetBrains Mono', monospace;
-    display: none;
+    display: none !important;
 }
 .update-btn:hover:not(:disabled) {
     background: #fff;
@@ -74,9 +63,9 @@
 .cache-badge {
     display: inline-block;
     padding: 2px 8px;
-    font-size: 8px;
+    font-size: 10px;
     font-weight: bold;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     border-radius: 2px;
     font-family: 'JetBrains Mono', monospace;
     text-transform: uppercase;
@@ -153,15 +142,15 @@
     box-shadow: 0 0 8px rgba(177, 142, 77, 0.4);
 }
 .window-header-title {
-    color: #d4c5a0; font-size: 10px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
+    color: #d4c5a0; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
     font-family: 'JetBrains Mono', monospace;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .window-header-tag {
-    color: #b18e4d; font-size: 9px;
+    color: #b18e4d; font-size: 11px;
     font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.15em; opacity: 0.6; white-space: nowrap;
+    letter-spacing: 0.12em; opacity: 0.6; white-space: nowrap;
 }
 
 /* --- 視窗控制按鈕 --- */
@@ -229,12 +218,12 @@
 /* 表格 */
 .window-body table {
     width: 100%; border-collapse: collapse; margin: 1.2em 0 1.8em 0;
-    font-size: 13px; background: #fff; border: 1px solid #e5e5e5;
+    font-size: 14px; background: #fff; border: 1px solid #e5e5e5;
     border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .window-body thead    { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); }
 .window-body thead th {
-    color: #d4c5a0; font-size: 11px; font-weight: 700;
+    color: #d4c5a0; font-size: 12px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase;
     padding: 12px 16px; text-align: left;
     border-bottom: 2px solid var(--aurum-gold); white-space: nowrap;
@@ -267,3 +256,24 @@
 
 /* Footer */
 footer p { line-height: 1.6; }
+
+
+/* ==========================================================
+   5. 響應式 — 手機全屏彈出視窗
+   ========================================================== */
+@media (max-width: 640px) {
+    .draggable-window {
+        width: 100vw !important;
+        height: 100dvh !important;
+        max-width: 100vw !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    .window-body { padding: 20px 16px; }
+    .window-header-left { padding: 12px 14px; gap: 10px; }
+    .window-header-tag { display: none; }
+}
